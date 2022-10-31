@@ -4,10 +4,7 @@ import java.util.Arrays;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.AfterThrowing;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -60,13 +57,13 @@ public class LoggingAspect {
     @Around("applicationPackagePointcut() && springBeanPointcut()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         if (log.isDebugEnabled()) {
-            log.debug("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(),
+            log.info("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(),
                     joinPoint.getSignature().getName(), Arrays.toString(joinPoint.getArgs()));
         }
         try {
             Object result = joinPoint.proceed();
             if (log.isDebugEnabled()) {
-                log.debug("Exit: {}.{}() with result = {}", joinPoint.getSignature().getDeclaringTypeName(),
+                log.info("Exit: {}.{}() with result = {}", joinPoint.getSignature().getDeclaringTypeName(),
                         joinPoint.getSignature().getName(), result);
             }
             return result;
@@ -75,5 +72,83 @@ public class LoggingAspect {
                     joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName());
             throw e;
         }
+    }
+
+    /**
+     * Run before the method execution.
+     * @param joinPoint
+     */
+    @Before("execution(* com.pranay.springbootaoplogging.service.EmployeeService.createEmployee(..))")
+    public void logBefore(JoinPoint joinPoint) {
+        log.info("logBefore running .....");
+        log.info(joinPoint.getSignature().getDeclaringTypeName(),
+                joinPoint.getSignature().getName(), Arrays.toString(joinPoint.getArgs()));
+
+    }
+
+    /**
+     * Run after the method returned a result.
+     * @param joinPoint
+     */
+    @After("execution(* com.pranay.springbootaoplogging.service.EmployeeService.createEmployee(..))")
+    public void logAfter(JoinPoint joinPoint) {
+        log.info("logAfter running .....");
+        log.info(joinPoint.getSignature().getDeclaringTypeName(),
+                joinPoint.getSignature().getName(), Arrays.toString(joinPoint.getArgs()));
+    }
+
+    /**
+     * Run after the method returned a result, intercept the returned result as well.
+     * @param joinPoint
+     * @param result
+     */
+    @AfterReturning(pointcut = "execution(* com.pranay.springbootaoplogging.service.EmployeeService.deleteEmployee(..))", returning = "result")
+    public void logAfterReturning(JoinPoint joinPoint, Object result) {
+        log.info("logAfterReturning running .....");
+        log.info(joinPoint.getSignature().getDeclaringTypeName(),
+                joinPoint.getSignature().getName(), Arrays.toString(joinPoint.getArgs()));
+
+    }
+
+    /**
+     * Run around the method execution.
+     * @param joinPoint
+     * @return
+     * @throws Throwable
+     */
+    @Around("execution(* com.pranay.springbootaoplogging.service.EmployeeService.getEmployeeById(..))")
+    public Object logAround2(ProceedingJoinPoint joinPoint) throws Throwable {
+        log.info("logAround running .....");
+        if (log.isDebugEnabled()) {
+            log.info("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(),
+                    joinPoint.getSignature().getName(), Arrays.toString(joinPoint.getArgs()));
+        }
+        try {
+            Object result = joinPoint.proceed();
+            if (log.isDebugEnabled()) {
+                log.info("Exit: {}.{}() with result = {}", joinPoint.getSignature().getDeclaringTypeName(),
+                        joinPoint.getSignature().getName(), result);
+            }
+            return result;
+        } catch (IllegalArgumentException e) {
+            log.error("Illegal argument: {} in {}.{}()", Arrays.toString(joinPoint.getArgs()),
+                    joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName());
+            throw e;
+        }
+
+    }
+
+    /**
+     * Advice that logs methods throwing exceptions.
+     *
+     * @param joinPoint join point for advice
+     * @param e         exception
+     */
+
+    @AfterThrowing(pointcut = "execution(* com.pranay.springbootaoplogging.service.EmployeeService.updateEmployee(..))", throwing = "error")
+    public void logAfterThrowing2(JoinPoint joinPoint, Throwable error) {
+        log.info("logAfterThrowing running .....");
+        log.error("Exception in {}.{}() with cause = {}", joinPoint.getSignature().getDeclaringTypeName(),
+                joinPoint.getSignature().getName(), error.getCause() != null ? error.getCause() : "NULL");
     }
 }
